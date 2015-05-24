@@ -1,11 +1,11 @@
 #!/usr/bin/python
 
 import BaseHTTPServer
-import ConfigParser
+import json
 import method
 
-server_address = ('127.0.0.1', 8000)
-confFile = './setup.conf'
+defaultAddr = '127.0.0.1:8000'
+defaultConfFile = './setup.json'
 
 class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     server_version = "Impostor/1.0"
@@ -58,9 +58,54 @@ def loadInterfaces(confFile, httpd):
 #enddef
 
 
+
+
 if __name__ == "__main__":
-    print "Running at %s:%d"%server_address
-    httpd = HTTPServer(server_address, HTTPRequestHandler)
-    loadInterfaces(confFile, httpd)
+
+    import sys, os
+    from optparse import OptionParser
+
+    parser = OptionParser(usage="usage: %prog [options] [host][:port] [rootDir]", version=HTTPRequestHandler.server_version)
+    parser.add_option("-f", "--config", dest="conf", default=defaultConfFile,
+                  help="JSON server config file to use")
+
+    (options, args) = parser.parse_args()
+
+    
+    addr = defaultAddr
+    rootDir = os.path.dirname(sys.argv[0])
+    host = '127.0.0.1'
+    port = 8000
+
+    # load server conf
+    confData = "{%s}"%open(options.conf, 'r').read()
+    conf = json.loads(confData)
+    if 'server' in conf:
+        if 'host' in conf['server']:
+            addr = ''
+            host = conf['server']['host']
+        if 'port' in conf['server']:
+            addr = ''
+            port = conf['server']['port']
+        if 'rootDir' in conf['server']:
+            rootDir = os.path.join(rootDir, conf['server']['rootDir'])
+
+    if len(args) > 2:
+        parser.error("Incorrect number of arguments")
+    if len(args) > 0: addr = args[0]
+    if len(args) > 1: rootDir = os.path.join(rootDir, args[1])
+
+    pos = addr.rfind(':')
+    if pos >= 0: 
+        hostS = addr[:pos]
+        portS = addr[pos+1:]
+        if hostS != '': host = hostS
+        if portS != '': port = int(portS)
+    elif addr != '': # given host only
+        host = addr
+
+    print "Running at %s:%d, serving %s/"%(host, port, rootDir)
+    httpd = HTTPServer((host, port), HTTPRequestHandler)
+    #loadInterfaces(confFile, httpd)
     httpd.serve_forever()
 
