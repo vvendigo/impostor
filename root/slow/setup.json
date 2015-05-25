@@ -1,0 +1,6 @@
+"get":{
+    "handler": "serveFiles",
+    "header:Content-Type": "text/html; charset=utf-8",
+    "delay": 3.0,
+    "serveFile": "index.html"
+}

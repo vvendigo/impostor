@@ -2,7 +2,8 @@
 
 import BaseHTTPServer
 import json
-import method
+import handlers
+import os
 
 defaultAddr = '127.0.0.1:8000'
 defaultConfFile = './setup.json'
@@ -13,56 +14,51 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def write(self, data):
         return self.wfile.write(data)
 
+    def do(self, method):
+        # iterate path, get deepest usable handler
+        pos = 0
+        handler = None
+        while pos >= 0:
+            path = self.server.rootDir +'/'+ self.path[:pos]
+            h = handlers.getHandler(path, method, self)
+            if h != None:
+                handler = h
+            pos = self.path.find('/', pos+1)
+        #endwhile
+        if handler == None:
+            self.send_error(501, "Not Implemented by Imposter")
+            return
+        # call the handler
+        handler.run(self.server.rootDir +'/'+ self.path, self)
+
     def do_HEAD(self):
-        self.send_response(200, "HEAD")
+        self.do('head')
 
     def do_GET(self):
-        iface = self.server.getInterface(self.path)
-        if iface == None:
-            self.send_error(501, "Not Implemented by Imposter")
-            return
-        iface.run(self)
+        self.do('get')
 
     def do_POST(self):
-        iface = self.server.getInterface(self.path)
-        if iface == None:
-            self.send_error(501, "Not Implemented by Imposter")
-            return
-        iface.run(self)
+        self.do('post')
 
+    def do_PUT(self):
+        self.do('put')
+
+    def do_DELETE(self):
+        self.do('delete')
 #endclass
 
 
 class HTTPServer(BaseHTTPServer.HTTPServer):
-    def __init__(self, server_address, RequestHandlerClass):
+    def __init__(self, server_address, RequestHandlerClass, rootDir):
+        self.rootDir = rootDir
         BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)
-        self.interfaces = []
-
-    def addInterface(self, iface):
-        self.interfaces.append(iface)
-
-    def getInterface(self, path):
-        for i in self.interfaces:
-            if i.accepts(path):
-                return i
-        return None
 #endclass
-
-
-def loadInterfaces(confFile, httpd):
-    cfg = ConfigParser.ConfigParser()
-    cfg.read(confFile)
-    for section in cfg.sections():
-        meth = cfg.get(section, 'method')
-        httpd.addInterface(eval('method.'+meth+'(cfg,"'+section+'")'))
-#enddef
-
 
 
 
 if __name__ == "__main__":
 
-    import sys, os
+    import sys
     from optparse import OptionParser
 
     parser = OptionParser(usage="usage: %prog [options] [host][:port] [rootDir]", version=HTTPRequestHandler.server_version)
@@ -71,7 +67,6 @@ if __name__ == "__main__":
 
     (options, args) = parser.parse_args()
 
-    
     addr = defaultAddr
     rootDir = os.path.dirname(sys.argv[0])
     host = '127.0.0.1'
@@ -96,7 +91,7 @@ if __name__ == "__main__":
     if len(args) > 1: rootDir = os.path.join(rootDir, args[1])
 
     pos = addr.rfind(':')
-    if pos >= 0: 
+    if pos >= 0:
         hostS = addr[:pos]
         portS = addr[pos+1:]
         if hostS != '': host = hostS
@@ -104,8 +99,8 @@ if __name__ == "__main__":
     elif addr != '': # given host only
         host = addr
 
-    print "Running at %s:%d, serving %s/"%(host, port, rootDir)
-    httpd = HTTPServer((host, port), HTTPRequestHandler)
-    #loadInterfaces(confFile, httpd)
+    print "Running at %s:%d, serving %s/,"%(host, port, rootDir),
+    print "Ctrl+C to stop"
+    httpd = HTTPServer((host, port), HTTPRequestHandler, rootDir)
     httpd.serve_forever()
 
