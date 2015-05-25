@@ -14,13 +14,13 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def write(self, data):
         return self.wfile.write(data)
 
-    def do(self, method):
+    def handler(self):
         # iterate path, get deepest usable handler
         pos = 0
         handler = None
         while pos >= 0:
-            path = self.server.rootDir +'/'+ self.path[:pos]
-            h = handlers.getHandler(path, method, self)
+            path = self.path[:pos]
+            h = self.getHandler(path)
             if h != None:
                 handler = h
             pos = self.path.find('/', pos+1)
@@ -32,19 +32,58 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         handler.run(self.server.rootDir +'/'+ self.path, self)
 
     def do_HEAD(self):
-        self.do('head')
+        self.handler()
 
     def do_GET(self):
-        self.do('get')
+        self.handler()
 
     def do_POST(self):
-        self.do('post')
+        self.handler()
 
     def do_PUT(self):
-        self.do('put')
+        self.handler()
 
     def do_DELETE(self):
-        self.do('delete')
+        self.handler()
+
+    def getHandler(self, pathToTry):
+        method = self.command
+        path = self.server.rootDir + pathToTry
+
+        self.log_message('Trying '+path);
+        if not os.path.exists(path):
+            self.log_message(path+' not found')
+            return None
+        confPath = path+'/'+'setup.json'
+        conf = {}
+        if not os.path.exists(confPath):
+            self.log_message(confPath+' not found')
+            return None
+        confData = "{%s}"%open(confPath, 'r').read()
+        try:
+            conf = json.loads(confData)
+        except:
+            self.log_error('Unable to parse '+confPath)
+            raise
+        for m in conf.keys():
+            if m.startswith(method+' '):
+                self.log_message("'%s' '%s'"%(self.path[len(pathToTry)+1:], m[m.find(' ')+1:]))
+                if self.path[len(pathToTry)+1:].startswith(m[m.find(' ')+1:]):
+                    method = m
+                    break
+        if method not in conf:
+            self.log_error('no "'+method+'" in '+confPath)
+            return None
+        if 'handler' not in conf[method]:
+            self.log_error('no handler for "'+method+'" set in '+confPath)
+            return None
+        handlerClass = getattr(handlers, conf[method]['handler'])
+        handler = handlerClass(conf[method])
+        if handler.disabled:
+            return None
+        return handler
+    #enddef
+
 #endclass
 
 
@@ -104,3 +143,4 @@ if __name__ == "__main__":
     httpd = HTTPServer((host, port), HTTPRequestHandler, rootDir)
     httpd.serve_forever()
 
+#endmain

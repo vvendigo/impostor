@@ -1,4 +1,0 @@
-"get":{
-	"handler":"serveFiles",
-	"header:Content-Type": "text/html"
-}

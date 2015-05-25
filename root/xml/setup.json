@@ -1,5 +1,5 @@
-"get":{
-    "handler": "serveFiles",
+"GET":{
+    "handler": "serveDir",
     "header:Content-Type": "application/xml"
 }
 

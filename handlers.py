@@ -1,5 +1,4 @@
-import sys, os
-import json
+import os
 import time
 
 # handlers:
@@ -28,20 +27,39 @@ class handler:
 #endclass
 
 
-class serveFiles(handler):
-    ''' file serving handler '''
+class serveDir(handler):
+    ''' directory serving handler '''
+    def run(self, path, rqHandler):
+        handler.run(self, path, rqHandler)
+        rqHandler.end_headers()
+        rqHandler.write(open(path, 'r').read())
+#endclass
+
+class serveFile(handler):
+    ''' one file serving handler '''
     def __init__(self, cfg):
         handler.__init__(self, cfg)
-        self.serveFile = cfg.get('serveFile', '')
+        self.serveFile = cfg.get('serve', '')
 
     def run(self, path, rqHandler):
         handler.run(self, path, rqHandler)
         rqHandler.end_headers()
-        if self.serveFile != '':
-            rqHandler.write(open(os.path.join(path, self.serveFile)).read())
-        else:
-            rqHandler.write(open(path, 'r').read())
+        rqHandler.write(open(os.path.join(path, self.serveFile)).read())
 #endclass
+
+class serveString(handler):
+    ''' one file serving handler '''
+    def __init__(self, cfg):
+        handler.__init__(self, cfg)
+        self.serve = cfg.get('serve', '')
+        
+    def run(self, path, rqHandler):
+        handler.run(self, path, rqHandler)
+        rqHandler.end_headers()
+        rqHandler.write(self.serve)
+#endclass
+
+
 
 class headers(handler):
     ''' headers only handler '''
@@ -61,33 +79,4 @@ class returnPost(handler):
         rqHandler.write('<html><body><h1>Post!</h1>postdata:<br>'+data+'</body></html>')
 #endclass
 '''
-
-
-def getHandler(path, method, rq):
-    if not os.path.exists(path):
-        rq.log_message(path+' not found')
-        return None
-    confPath = path+'/'+'setup.json'
-    conf = {}
-    if not os.path.exists(confPath):
-        rq.log_message(confPath+' not found')
-        return None
-    else:
-        confData = "{%s}"%open(confPath, 'r').read()
-        try:
-            conf = json.loads(confData)
-        except:
-            rq.log_error('Unable to parse '+confPath)
-            raise
-    if method not in conf:
-        rq.log_error('no "'+method+'" in '+confPath)
-        return None
-    if 'handler' not in conf[method]:
-        rq.log_error('no handler for "'+method+'" set in '+confPath)
-        return None
-    handlerClass = getattr(sys.modules[__name__], conf[method]['handler'])
-    return handlerClass(conf[method])
-#enddef
-
-
 

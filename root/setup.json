@@ -1,6 +1,22 @@
-"get":{
-	"handler": "serveFiles",
+"GET html/":{
+	"handler": "serveDir",
+	"header:Content-Type": "text/html; charset=utf-8"
+},
+
+"GET 404":{
+	"handler":"headers",
+	"status":404
+},
+
+"GET slow/":{
+    "handler": "serveString",
+    "header:Content-Type": "text/html; charset=utf-8",
+    "delay": 3.0,
+    "serve": "<html><body>Slow, isn't it?</body></html>"
+},
+
+"GET":{
+	"handler": "serveFile",
 	"header:Content-Type": "text/html; charset=utf-8",
-	"delay": 0.0,
-	"serveFile": "index.html"
+	"serve": "index.html"
 }
