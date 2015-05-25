@@ -62,20 +62,16 @@ class returnPost(handler):
 #endclass
 '''
 
-defaultConf = {
-    'head': {'handler': 'headers'},
-    'get': {'handler': 'serveFiles'},
-    'post': {'handler': 'serveFiles'},
-}
 
 def getHandler(path, method, rq):
     if not os.path.exists(path):
         rq.log_message(path+' not found')
         return None
     confPath = path+'/'+'setup.json'
-    conf = defaultConf
+    conf = {}
     if not os.path.exists(confPath):
         rq.log_message(confPath+' not found')
+        return None
     else:
         confData = "{%s}"%open(confPath, 'r').read()
         try:
@@ -84,10 +80,10 @@ def getHandler(path, method, rq):
             rq.log_error('Unable to parse '+confPath)
             raise
     if method not in conf:
-        rq.log_error('no '+method+' in '+confPath)
+        rq.log_error('no "'+method+'" in '+confPath)
         return None
     if 'handler' not in conf[method]:
-        rq.log_error('no handler for '+method+' set in '+confPath)
+        rq.log_error('no handler for "'+method+'" set in '+confPath)
         return None
     handlerClass = getattr(sys.modules[__name__], conf[method]['handler'])
     return handlerClass(conf[method])
