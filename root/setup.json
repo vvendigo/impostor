@@ -15,6 +15,11 @@
     "serve": "<html><body>Slow, isn't it?</body></html>"
 },
 
+"GET christ-mocked.jpg":{
+	"handler": "proxyHTTP",
+	"URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
+},
+
 "GET":{
 	"handler": "serveFile",
 	"header:Content-Type": "text/html; charset=utf-8",

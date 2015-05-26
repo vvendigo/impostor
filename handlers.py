@@ -1,5 +1,7 @@
 import os
 import time
+import httplib
+import urlparse
 
 # handlers:
 
@@ -48,7 +50,7 @@ class serveFile(handler):
 #endclass
 
 class serveString(handler):
-    ''' one file serving handler '''
+    ''' data serving handler '''
     def __init__(self, cfg):
         handler.__init__(self, cfg)
         self.serve = cfg.get('serve', '')
@@ -59,14 +61,54 @@ class serveString(handler):
         rqHandler.write(self.serve)
 #endclass
 
-
-
 class headers(handler):
     ''' headers only handler '''
     def run(self, path, rqHandler):
         handler.run(self, path, rqHandler)
         rqHandler.end_headers()
 #endclass
+
+class proxyHTTP(handler):
+    ''' proxy requests '''
+    def __init__(self, cfg):
+        handler.__init__(self, cfg)
+        self.status = cfg.get('status', 0)
+        self.serve = cfg.get('URL', '')
+
+    def run(self, path, rq):
+        body = None
+        bodyLen = int(rq.headers.getheader('content-length', 0))
+        if bodyLen:
+            body = rqHandler.rfile.read(bodyLen)
+        rqheaders = {}
+        url = urlparse.urlparse(self.serve)
+        for ln in rq.headers.headers:
+            h,v = ln.split(':', 1)
+            if h=="Host":
+                v = url.netloc
+            rqheaders[h] = v.strip()
+            rq.log_message(h+": "+v.strip())
+        rq.log_message(url.netloc+" "+url.path)
+
+        conn = httplib.HTTPConnection(url.netloc)
+        conn.request(rq.command, url.path, body, rqheaders)
+        
+        #rq.path
+        #rq.request_version
+
+        res = conn.getresponse()
+
+        if self.status == 0:
+            self.status = res.status
+        if self.statusMessage == '':
+            self.statusMessage = res.reason
+        self.headers = res.getheaders() + self.headers
+        handler.run(self, path, rq)
+        rq.end_headers()
+        rq.write(res.read())
+        conn.close()
+#endclass
+
 
 '''
 class returnPost(handler):
