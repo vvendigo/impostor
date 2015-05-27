@@ -50,7 +50,7 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         method = self.command
         path = self.server.rootDir + pathToTry
 
-        self.log_message('Trying '+path);
+        #self.log_message('Trying '+path);
         if not os.path.exists(path):
             self.log_message(path+' not found')
             return None
@@ -67,7 +67,7 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             raise
         for m in conf.keys():
             if m.startswith(method+' '):
-                self.log_message("'%s' '%s'"%(self.path[len(pathToTry)+1:], m[m.find(' ')+1:]))
+                #self.log_message("'%s' '%s'"%(self.path[len(pathToTry)+1:], m[m.find(' ')+1:]))
                 if self.path[len(pathToTry)+1:].startswith(m[m.find(' ')+1:]):
                     method = m
                     break
@@ -77,11 +77,13 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if 'handler' not in conf[method]:
             self.log_error('no handler for "'+method+'" set in '+confPath)
             return None
+        # create handler
         handlerClass = getattr(handlers, conf[method]['handler'])
         handler = handlerClass(conf[method])
-        if handler.disabled:
-            return None
-        return handler
+        # check acceptance
+        if handler.accepts(self.server.rootDir +'/'+ self.path, self):
+            return handler
+        return None
     #enddef
 
 #endclass

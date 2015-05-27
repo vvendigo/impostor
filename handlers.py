@@ -12,10 +12,10 @@ class handler:
         self.status = cfg.get('status', 200)
         self.statusMessage = cfg.get('statusMessage', '')
         self.delay = cfg.get('delay', 0)
-        self.headers = []
-        for k, v in cfg.iteritems():
-            if k.startswith('header:'):
-                self.headers.append((k[7:], v))
+        self.headers = cfg.get('headers', {})
+
+    def accepts(self, path, rqHandler):
+        return not self.disabled
 
     def run(self, path, rqHandler):
         if self.delay > 0:
@@ -24,7 +24,7 @@ class handler:
             rqHandler.send_response(self.status, self.statusMessage)
         else:
             rqHandler.send_response(self.status)
-        for h, v in self.headers:
+        for h, v in self.headers.iteritems():
             rqHandler.send_header(h, v)
 #endclass
 
@@ -68,7 +68,7 @@ class headers(handler):
         rqHandler.end_headers()
 #endclass
 
-class proxyHTTP(handler):
+class proxy(handler):
     ''' proxy requests '''
     def __init__(self, cfg):
         handler.__init__(self, cfg)
@@ -87,8 +87,8 @@ class proxyHTTP(handler):
             if h=="Host":
                 v = url.netloc
             rqheaders[h] = v.strip()
-            rq.log_message(h+": "+v.strip())
-        rq.log_message(url.netloc+" "+url.path)
+            #rq.log_message(h+": "+v.strip())
+        #rq.log_message(url.netloc+" "+url.path)
 
         conn = httplib.HTTPConnection(url.netloc)
         conn.request(rq.command, url.path, body, rqheaders)
@@ -102,7 +102,9 @@ class proxyHTTP(handler):
             self.status = res.status
         if self.statusMessage == '':
             self.statusMessage = res.reason
-        self.headers = res.getheaders() + self.headers
+        for h, v in res.getheaders():
+            if h not in self.headers:
+                self.headers[h] = v
         handler.run(self, path, rq)
         rq.end_headers()
         rq.write(res.read())
