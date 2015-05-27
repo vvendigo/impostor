@@ -31,9 +31,15 @@ class handler:
 
 class serveDir(handler):
     ''' directory serving handler '''
+    def __init__(self, cfg):
+        handler.__init__(self, cfg)
+        self.dropParams = cfg.get('dropParams', False)
+
     def run(self, path, rqHandler):
         handler.run(self, path, rqHandler)
         rqHandler.end_headers()
+        if self.dropParams:
+            path = urlparse.urlparse(path).path
         rqHandler.write(open(path, 'r').read())
 #endclass
 
