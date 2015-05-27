@@ -8,7 +8,7 @@ import urlparse
 class handler:
     ''' interface '''
     def __init__(self, cfg):
-        self.disabled = cfg.get('disable', 0)
+        self.disabled = cfg.get('disable', False)
         self.status = cfg.get('status', 200)
         self.statusMessage = cfg.get('statusMessage', '')
         self.delay = cfg.get('delay', 0)

@@ -1,0 +1,124 @@
+<html>
+<head>
+<title>Impostor help</title>
+<style type="text/css">
+th {border-bottom:1px solid #e0e0ff; border-left:1px solid #e0e0ff; text-align:left}
+</style>
+</head>
+<body>
+<h1>Help me, Impostor!</h1>
+<p><a href="#routing">Routing</a> | <a href="#handlers">Handlers</a> | <a href="#examples">Examples</a></p>
+
+<a name="routing" href="#">^</a>
+<h2>Routing</h2>
+<p>TODO</p>
+
+<a name="handlers" href="#">^</a>
+<h2>Handlers</h2>
+<p>Common configuration options:</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>disable</td><td>bool</td><td>Do nothing (do not interfere with routing)</td></tr>
+<tr><td>status</td><td>int</td><td>Status code to return</td></tr>
+<tr><td>statusMessage</td><td>string</td><td>Status message to return</td></tr>
+<tr><td>delay</td><td>float</td><td>Wait given secs before reply</td></tr>
+<tr><td>headers</td><td>dict</td><td>Headers to return</td></tr>
+</table>
+
+
+<h3>headers</h3>
+<p>Returns headers only. Suitable for error status responses.</p>
+
+<h3>serveDir</h3>
+<p>Serve files from current directory</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>dropParams</td><td>bool</td><td>Do not use URL params as part of filename</td></tr>
+</table>
+
+<h3>serveFile</h3>
+<p></p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>serve</td><td>string</td><td>Path to file to return</td></tr>
+</table>
+
+<h3>serveString</h3>
+<p></p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>serve</td><td>string</td><td>Data to return</td></tr>
+</table>
+
+<h3>proxy</h3>
+<p></p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>URL</td><td>string</td><td>Target URL to proxy</td></tr>
+</table>
+
+<a name="examples" href="#">^</a>
+<h2>Configuration examples</h2>
+
+<h3>headers</h3>
+<p>Return HTTP error 404 for every request to current directory.</p>
+<pre>
+"HEAD":{
+    "handler":"headers",
+    "status":404,
+    "statusMessage":"Not found"
+},
+"GET":{
+    "handler":"headers",
+    "status":404,
+    "statusMessage":"Not found"
+},
+"POST":{
+    "handler":"headers",
+    "status":404,
+    "statusMessage":"Not found"
+}
+</pre>
+
+<h3>serveDir</h3>
+<p>Serve files from current directory (GET only). Do not include URL params in filenames.</p>
+<pre>
+"GET":{
+    "handler": "serveDir",
+    "dropParams": true,
+    "headers":{"Content-Type": "text/html; charset=utf-8"}
+}
+</pre>
+
+<h3>serveFile</h3>
+<p>Serve index.html from current directory for every GET request.</p>
+<pre>
+"GET":{
+    "handler": "serveFile",
+    "headers":{"Content-Type": "text/html; charset=utf-8"},
+    "serve": "index.html"
+}
+</pre>
+
+<h3>serveString</h3>
+<p>Serve given HTML data for every GET request.</p>
+<pre>
+"GET":{
+    "handler": "serveString",
+    "headers":{"Content-Type": "text/html"},
+    "serve": "&lt;html&gt;&lt;body&gt;Slow, isn't it?&lt;/body&gt;&lt;/html&gt;"
+}
+</pre>
+
+<h3>proxy</h3>
+<p>Serve proxed file for currentdir/christ-mocked.jpg</p>
+<pre>
+"GET christ-mocked.jpg":{
+    "handler": "proxy",
+    "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
+}
+</pre>
+
+
+</body>
+</html>

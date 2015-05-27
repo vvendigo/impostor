@@ -1,0 +1,5 @@
+"GET":{
+    "handler": "serveFile",
+    "headers":{"Content-Type": "text/html; charset=utf-8"},
+    "serve": "index.html"
+}

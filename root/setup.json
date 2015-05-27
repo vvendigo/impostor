@@ -1,12 +1,12 @@
 "GET html/":{
-	"handler": "serveDir",
-	"dropParams": true,
-	"headers":{"Content-Type": "text/html; charset=utf-8"}
+    "handler": "serveDir",
+    "dropParams": true,
+    "headers":{"Content-Type": "text/html; charset=utf-8"}
 },
 
 "GET 404":{
-	"handler":"headers",
-	"status":404
+    "handler":"headers",
+    "status":404
 },
 
 "GET slow/":{
@@ -17,12 +17,12 @@
 },
 
 "GET christ-mocked.jpg":{
-	"handler": "proxy",
-	"URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
+    "handler": "proxy",
+    "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
 },
 
 "GET":{
-	"handler": "serveFile",
-	"headers":{"Content-Type": "text/html; charset=utf-8"},
-	"serve": "index.html"
+    "handler": "serveFile",
+    "headers":{"Content-Type": "text/html; charset=utf-8"},
+    "serve": "index.html"
 }
