@@ -29,7 +29,7 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.send_error(501, "Not Implemented by Imposter")
             return
         # call the handler
-        handler.run(self.server.rootDir +'/'+ self.path, self)
+        handler.run(self.server.rootDir +'/'+ self.path)
 
     def do_HEAD(self):
         self.handler()
@@ -79,9 +79,9 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             return None
         # create handler
         handlerClass = getattr(handlers, conf[method]['handler'])
-        handler = handlerClass(conf[method])
+        handler = handlerClass(conf[method], self)
         # check acceptance
-        if handler.accepts(self.server.rootDir +'/'+ self.path, self):
+        if handler.accepts(self.server.rootDir +'/'+ self.path):
             return handler
         return None
     #enddef

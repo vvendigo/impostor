@@ -21,6 +21,17 @@
     "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
 },
 
+"GET paramcheck":{
+    "handler": "headers",
+    "status":200,
+    "checkParams":{
+        "x":"int,required",
+        "y":"int",
+        "s":"string",
+        "f":"float"
+    }
+},
+
 "GET":{
     "handler": "serveFile",
     "headers":{"Content-Type": "text/html; charset=utf-8"},

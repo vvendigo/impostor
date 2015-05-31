@@ -1,0 +1,12 @@
+"POST"{ // WIP
+    "handler": "xml-rpc",
+    "methods":{
+        "hello": {
+            "serve": "bye.xml"
+        },
+        "bye": {
+			// return "bye.xml" by default
+        }
+    }
+},
+
