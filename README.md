@@ -12,5 +12,8 @@ See rich [directory setup example](https://github.com/vvendigo/impostor/blob/mas
 ## How to run:
 The only prequisity is Python (>=2.6?)
 
-Download repo and run ./server.py
+ - download repo
+ - run ./server.py
+ - visit http://localhost:8000/
+
 
