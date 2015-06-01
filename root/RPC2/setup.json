@@ -1,0 +1,10 @@
+"POST":{
+    "handler": "xmlRpc",
+    "methods":{
+        "hello": {
+            "serve": "bye.xmlrpc"
+        },
+        "bye": {
+        }
+    }
+}

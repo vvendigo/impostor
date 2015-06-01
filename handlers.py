@@ -2,7 +2,7 @@ import os
 import time
 import httplib
 import urlparse
-
+import xmlrpclib
 
 class handler:
     ''' interface '''
@@ -157,7 +157,6 @@ class proxy(handler):
         conn.close()
 #endclass
 
-
 class dump(handler):
     def run(self, path):
         client, command, headers, data = self.requestDump()
@@ -180,4 +179,32 @@ class dump(handler):
         self.rq.write('</body></html>')
 #endclass
 
+class xmlRpc(handler):
+    ''' handling XML-RPC requests '''
+    def __init__(self, cfg, rq):
+        handler.__init__(self, cfg, rq)
+        self.methods = cfg.get('methods', {})
+
+    def accepts(self, path):
+        data = self.rq.getData()
+        params, methodname = xmlrpclib.loads(data)
+        return handler.accepts(self, path) and methodname in self.methods
+
+    def run(self, path):
+        data = self.rq.getData()
+        params, methodname = xmlrpclib.loads(data)
+        self.rq.log_message('RPC call: '+methodname)
+        cfg = self.methods[methodname]
+        if 'serve' in cfg:
+            data = open(os.path.join(path, cfg['serve'])).read()
+        else:
+            data = open(path+'/'+methodname+'.xmlrpc', 'r').read()
+
+        if 'Content-Type' not in self.headers:
+            self.headers['Content-Type'] = 'text/xml'
+        self.headers['Content-Length'] = len(data)
+        handler.run(self, path)
+        self.rq.end_headers()
+        self.rq.write(data)
+#endclass
 
