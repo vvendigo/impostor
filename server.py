@@ -11,8 +11,21 @@ defaultConfFile = './setup.json'
 class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     server_version = "Impostor/1.0"
 
+    def __init__(self, request, client_address, server):
+        self.data = None
+        BaseHTTPServer.BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+
     def write(self, data):
         return self.wfile.write(data)
+
+    def getData(self):
+        if self.data == None:
+            length = int(self.headers.getheader('Content-Length', 0))
+            if length:
+                self.data = self.rfile.read(length)
+            else:
+                self.data = ''
+        return self.data
 
     def handler(self):
         # iterate path, get deepest usable handler

@@ -3,6 +3,7 @@
 <title>Impostor help</title>
 <style type="text/css">
 th {border-bottom:1px solid #e0e0ff; border-left:1px solid #e0e0ff; text-align:left}
+pre {background-color:#f0f0ff;padding:0.3em}
 </style>
 </head>
 <body>
@@ -18,71 +19,37 @@ th {border-bottom:1px solid #e0e0ff; border-left:1px solid #e0e0ff; text-align:l
 <p>Common configuration options:</p>
 <table>
 <tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>handler</td><td>string</td><td>Handler</td></tr>
 <tr><td>disable</td><td>bool</td><td>Do nothing (do not interfere with routing)</td></tr>
 <tr><td>status</td><td>int</td><td>Status code to return</td></tr>
 <tr><td>statusMessage</td><td>string</td><td>Status message to return</td></tr>
-<tr><td>delay</td><td>float</td><td>Wait given secs before reply</td></tr>
 <tr><td>headers</td><td>dict</td><td>Headers to return</td></tr>
+<tr><td>delay</td><td>float</td><td>Wait given secs before reply</td></tr>
+<tr><td>dumpRequest</td><td>bool</td><td>Write all request data to log</td></tr>
 </table>
-
 
 <h3>headers</h3>
 <p>Returns headers only. Suitable for error status responses.</p>
-
-<h3>serveDir</h3>
-<p>Serve files from current directory</p>
-<table>
-<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
-<tr><td>dropParams</td><td>bool</td><td>Do not use URL params as part of filename</td></tr>
-</table>
-
-<h3>serveFile</h3>
-<p></p>
-<table>
-<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
-<tr><td>serve</td><td>string</td><td>Path to file to return</td></tr>
-</table>
-
-<h3>serveString</h3>
-<p></p>
-<table>
-<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
-<tr><td>serve</td><td>string</td><td>Data to return</td></tr>
-</table>
-
-<h3>proxy</h3>
-<p></p>
-<table>
-<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
-<tr><td>URL</td><td>string</td><td>Target URL to proxy</td></tr>
-</table>
-
-<a name="examples" href="#">^</a>
-<h2>Configuration examples</h2>
-
-<h3>headers</h3>
-<p>Return HTTP error 404 for every request to current directory.</p>
 <pre>
-"HEAD":{
-    "handler":"headers",
-    "status":404,
-    "statusMessage":"Not found"
-},
-"GET":{
-    "handler":"headers",
-    "status":404,
-    "statusMessage":"Not found"
-},
-"POST":{
+// Example: Return HTTP error 404 for every request to current directory.
+
+"HEAD | GET | POST":{
     "handler":"headers",
     "status":404,
     "statusMessage":"Not found"
 }
 </pre>
 
+
 <h3>serveDir</h3>
-<p>Serve files from current directory (GET only). Do not include URL params in filenames.</p>
+<p>Serve files from current directory.</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>dropParams</td><td>bool</td><td>Do not use URL params as part of filename</td></tr>
+</table>
 <pre>
+// Example: Serve files from current directory (GET only). Do not include URL params in filenames.
+
 "GET":{
     "handler": "serveDir",
     "dropParams": true,
@@ -91,8 +58,14 @@ th {border-bottom:1px solid #e0e0ff; border-left:1px solid #e0e0ff; text-align:l
 </pre>
 
 <h3>serveFile</h3>
-<p>Serve index.html from current directory for every GET request.</p>
+<p>Serve given file contents.</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>serve</td><td>string</td><td>Path to file to return</td></tr>
+</table>
 <pre>
+// Example: Serve index.html from current directory for every GET request.
+
 "GET":{
     "handler": "serveFile",
     "headers":{"Content-Type": "text/html; charset=utf-8"},
@@ -101,8 +74,14 @@ th {border-bottom:1px solid #e0e0ff; border-left:1px solid #e0e0ff; text-align:l
 </pre>
 
 <h3>serveString</h3>
-<p>Serve given HTML data for every GET request.</p>
+<p>Serve given data.</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>serve</td><td>string</td><td>Data to return</td></tr>
+</table>
 <pre>
+// Example: Serve given HTML data for every GET request.
+
 "GET":{
     "handler": "serveString",
     "headers":{"Content-Type": "text/html"},
@@ -111,14 +90,47 @@ th {border-bottom:1px solid #e0e0ff; border-left:1px solid #e0e0ff; text-align:l
 </pre>
 
 <h3>proxy</h3>
-<p>Serve proxed file for currentdir/christ-mocked.jpg</p>
+<p>Proxy request.</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>URL</td><td>string</td><td>Target URL to proxy</td></tr>
+</table>
 <pre>
+// Example: Serve proxed file for currentdir/christ-mocked.jpg
+
 "GET christ-mocked.jpg":{
     "handler": "proxy",
     "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
 }
 </pre>
 
+<h3>dump</h3>
+<p>Return page showing request headers and data.</p>
+<p>No config options.</p>
+<h4>Example:</h4>
+<pre>
+// Example: Display dump for every request to current directory:
+
+"HEAD | GET | POST | PUT | DELETE":{
+    "handler":"dump"
+}
+</pre>
+
+<a name="examples" href="#">^</a>
+<h2>Configuration examples</h2>
+
+<h3>Just serve files</h3>
+<p>Return files from current directory and subdirectories as text/html</p>
+<pre>
+"GET | POST":{
+    "handler":"serveDir",
+    "dropParams": true,
+    "headers":{"Content-Type": "text/html; charset=utf-8"}
+}
+</pre>
+
+<h3>REST interface</h3>
+<p>TODO</p>
 
 </body>
 </html>

@@ -6,6 +6,7 @@
 
 "GET 404 | POST 404":{
     "handler":"headers",
+    "dumpRequest": true,
     "status":404
 },
 
@@ -18,6 +19,7 @@
 
 "GET christ-mocked.jpg":{
     "handler": "proxy",
+    "dumpRequest": true,
     "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
 },
 
@@ -30,6 +32,10 @@
         "s":"string",
         "f":"float"
     }
+},
+
+"GET dump | POST dump":{
+    "handler":"dump"
 },
 
 "GET":{

@@ -3,7 +3,6 @@ import time
 import httplib
 import urlparse
 
-# handlers:
 
 class handler:
     ''' interface '''
@@ -15,11 +14,18 @@ class handler:
         self.delay = cfg.get('delay', 0)
         self.headers = cfg.get('headers', {})
         self.checkParams = cfg.get('checkParams', None)
+        self.dumpRequest = cfg.get('dumpRequest', False)
 
     def accepts(self, path):
         return not self.disabled
 
     def run(self, path):
+        if self.dumpRequest:
+            client, command, headers, data = self.requestDump()
+            self.rq.log_message('--- DUMPING REQUEST FROM '+client+' ---\n'
+                + command + '\n'
+                + headers + '\n'
+                + data)
         if self.delay > 0:
             time.sleep(self.delay)
         if self.checkParams != None:
@@ -49,6 +55,16 @@ class handler:
                 try: float(val)
                 except: return False
         return True
+
+    def requestDump(self):
+        client = self.rq.client_address[0]+':'+str(self.rq.client_address[1])
+        command = self.rq.command+' '+self.rq.path+' '+self.rq.request_version
+        headers = ''
+        for ln in self.rq.headers.headers:
+            headers += ln
+        length = int(self.rq.headers.getheader('Content-Length', 0))
+        data = self.rq.getData()
+        return client, command, headers, data
 #eddef
 
 
@@ -109,10 +125,7 @@ class proxy(handler):
         self.serve = cfg.get('URL', '')
 
     def run(self, path):
-        body = None
-        bodyLen = int(self.rq.headers.getheader('content-length', 0))
-        if bodyLen:
-            body = rqHandler.rfile.read(bodyLen)
+        body = self.rq.getData()
         rqheaders = {}
         url = urlparse.urlparse(self.serve)
         for ln in self.rq.headers.headers:
@@ -145,15 +158,26 @@ class proxy(handler):
 #endclass
 
 
-'''
-class returnPost(handler):
-    def run(self, rqHandler):
-        length = int(rqHandler.headers.getheader('content-length'))
-        data = rqHandler.rfile.read(length)
-        handler.run(self, path, rqHandler)
-        TODO: rqHandler.send_header_if_not_set('Content-Type', 'text/html')
-        rqHandler.end_headers()
-        rqHandler.write('<html><body><h1>Post!</h1>postdata:<br>'+data+'</body></html>')
+class dump(handler):
+    def run(self, path):
+        client, command, headers, data = self.requestDump()
+
+        self.headers = {'Content-Type': 'text/html'}
+        self.status = 200
+        self.statusMessage = 'Dump - forced OK'
+        handler.run(self, path)
+        self.rq.end_headers()
+
+        self.rq.write('<html><head><title>Dump request from '+client+'</title><style>pre{background-color:f0f0ff}</style></head><body>')
+        self.rq.write('<h1>'+command+'</h1>\n')
+        self.rq.write('<h2>Headers</h2>\n')
+        self.rq.write('<pre>\n'+headers+'</pre>\n')
+       
+        self.rq.write('<h2>Data</h2>\n')
+        self.rq.write('<pre>\n')
+        self.rq.write(data)
+        self.rq.write('</pre>\n')
+        self.rq.write('</body></html>')
 #endclass
-'''
+
 
