@@ -4,7 +4,7 @@
     "headers":{"Content-Type": "text/html; charset=utf-8"}
 },
 
-"GET 404":{
+"GET 404 | POST 404":{
     "handler":"headers",
     "status":404
 },

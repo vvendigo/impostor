@@ -115,7 +115,7 @@ class proxy(handler):
             body = rqHandler.rfile.read(bodyLen)
         rqheaders = {}
         url = urlparse.urlparse(self.serve)
-        for ln in rq.headers.headers:
+        for ln in self.rq.headers.headers:
             h,v = ln.split(':', 1)
             if h=="Host":
                 v = url.netloc

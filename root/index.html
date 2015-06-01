@@ -1,6 +1,9 @@
 <html>
 <head>
 <title>Impostor testing setup</title>
+<style>
+form{margin:0;}
+</style>
 </head>
 <body>
 <h1>Impostor testing setup</h1>
@@ -8,6 +11,7 @@
 <a href="/html/1.html">Serve files from html/ directory</a><br>
 <a href="/xml/1">Serve XML files from xml/ directory</a><br>
 <a href="/404">Return 404</a><br>
+<form method="post" action="/404"><input type="submit" name="submit" value="POST 404"></form>
 <a href="/slow/">Response after 3 secs</a><br>
 <a href="/paramcheck?x=1&y=2&s=&f=1.0">Check URL params</a><br>
 Christ Mocked and Proxed:<br>

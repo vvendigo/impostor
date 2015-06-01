@@ -65,21 +65,27 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         except:
             self.log_error('Unable to parse '+confPath)
             raise
-        for m in conf.keys():
-            if m.startswith(method+' '):
-                #self.log_message("'%s' '%s'"%(self.path[len(pathToTry)+1:], m[m.find(' ')+1:]))
-                if self.path[len(pathToTry)+1:].startswith(m[m.find(' ')+1:]):
-                    method = m
+        methodConf = None
+        for m, mconf in conf.iteritems():
+            parts = [p.strip() for p in m.split('|')]
+            for mp in parts:
+                if mp.startswith(method+' '):
+                    if self.path[len(pathToTry)+1:].startswith(mp[mp.find(' ')+1:]):
+                        methodConf = mconf
+                        method = mp
+                        break
+                elif mp == method:
+                    methodConf = mconf
                     break
-        if method not in conf:
+        if methodConf == None:
             self.log_error('no "'+method+'" in '+confPath)
             return None
-        if 'handler' not in conf[method]:
+        if 'handler' not in methodConf:
             self.log_error('no handler for "'+method+'" set in '+confPath)
             return None
         # create handler
-        handlerClass = getattr(handlers, conf[method]['handler'])
-        handler = handlerClass(conf[method], self)
+        handlerClass = getattr(handlers, methodConf['handler'])
+        handler = handlerClass(methodConf, self)
         # check acceptance
         if handler.accepts(self.server.rootDir +'/'+ self.path):
             return handler
