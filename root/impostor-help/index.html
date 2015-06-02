@@ -158,7 +158,7 @@ setup.json:
 </pre>
 
 <h3>XML-RPC interface</h3>
-<p>Serve some methods from files and some handle by Python.</p>
+<p>Serve some methods from files and some handle by Python. Proxy the rest somewhere else.</p>
 <pre>
 disk:
 server.py
@@ -178,6 +178,10 @@ setup.json:
         "method2":{"serve":"response.xmlrpc"}
     },
     "module":"my_xmlrpc_methods"
+},
+"POST":{
+    "handler":"proxy",
+    "URL":"http://rpc.somewhereelse.cz/"
 }
 
 my_xmlrpc_methods.py:
