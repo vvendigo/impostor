@@ -1,7 +1,7 @@
 # Impostor (work in progress)
 Configurable and extendable mocking server implemented in pure Python.
 
-It can mock HTTP/REST interfaces. (to do: XML-RPC, SOAP maybe)
+It can mock HTTP/REST/XML-RPC interfaces. (to do: SOAP maybe)
 
 Runtime re/configurable using JSON confs and directory structure.
 
