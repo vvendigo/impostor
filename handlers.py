@@ -3,6 +3,9 @@ import time
 import httplib
 import urlparse
 import xmlrpclib
+import mimetypes
+import importlib
+from inspect import getmembers, isfunction
 
 class handler:
     ''' interface '''
@@ -91,6 +94,8 @@ class serveDir(handler):
 
     def run(self, path):
         data = self.readFile(path)
+        if 'Content-Type' not in self.headers:
+            self.headers['Content-Type'] = mimetypes.guess_type(path)[0]
         handler.run(self, path)
         self.rq.end_headers()
         self.rq.write(data)
@@ -104,6 +109,8 @@ class serveFile(handler):
 
     def run(self, path):
         data = self.readFile(os.path.join(path, self.serveFile))
+        if 'Content-Type' not in self.headers:
+            self.headers['Content-Type'] = mimetypes.guess_type(self.serveFile)[0]
         handler.run(self, path)
         self.rq.end_headers()
         self.rq.write(data)
@@ -197,8 +204,6 @@ class xmlRpc(handler):
         self.methods = cfg.get('methods', {})
         mName = cfg.get('module')
         if mName != None:
-            import importlib
-            from inspect import getmembers, isfunction
             try:
                 module = importlib.import_module(mName)
             except ImportError as e:

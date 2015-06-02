@@ -19,13 +19,13 @@ pre {background-color:#f0f0ff;padding:0.3em}
 <p>Common configuration options:</p>
 <table>
 <tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
-<tr><td>handler</td><td>string</td><td>Handler</td></tr>
-<tr><td>disable</td><td>bool</td><td>Do nothing (do not interfere with routing)</td></tr>
-<tr><td>status</td><td>int</td><td>Status code to return</td></tr>
-<tr><td>statusMessage</td><td>string</td><td>Status message to return</td></tr>
-<tr><td>headers</td><td>dict</td><td>Headers to return</td></tr>
-<tr><td>delay</td><td>float</td><td>Wait given secs before reply</td></tr>
-<tr><td>dumpRequest</td><td>bool</td><td>Write all request data to log</td></tr>
+<tr><td>handler</td><td>string</td><td>Handler to use</td></tr>
+<tr><td>disable</td><td>bool</td><td>Do nothing (do not interfere with routing) [false]</td></tr>
+<tr><td>status</td><td>int</td><td>Status code to return [200]</td></tr>
+<tr><td>statusMessage</td><td>string</td><td>Status message to return []</td></tr>
+<tr><td>headers</td><td>dict</td><td>Headers to return [BaseHTTPRequestHandler defaults]</td></tr>
+<tr><td>delay</td><td>float</td><td>Wait given secs before reply [0.0]</td></tr>
+<tr><td>dumpRequest</td><td>bool</td><td>Write all request data to log [false]</td></tr>
 </table>
 
 <h3>headers</h3>
@@ -42,7 +42,7 @@ pre {background-color:#f0f0ff;padding:0.3em}
 
 
 <h3>serveDir</h3>
-<p>Serve files from current directory.</p>
+<p>Serve files from current directory. If no Content-Type header provided, uses mimetype guess.</p>
 <table>
 <tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
 <tr><td>dropParams</td><td>bool</td><td>Do not use URL params as part of filename</td></tr>
@@ -52,13 +52,12 @@ pre {background-color:#f0f0ff;padding:0.3em}
 
 "GET":{
     "handler": "serveDir",
-    "dropParams": true,
-    "headers":{"Content-Type": "text/html; charset=utf-8"}
+    "dropParams": true
 }
 </pre>
 
 <h3>serveFile</h3>
-<p>Serve given file contents.</p>
+<p>Serve given file contents. If no Content-Type header provided, uses mimetype guess.</p>
 <table>
 <tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
 <tr><td>serve</td><td>string</td><td>Path to file to return</td></tr>
@@ -68,7 +67,6 @@ pre {background-color:#f0f0ff;padding:0.3em}
 
 "GET":{
     "handler": "serveFile",
-    "headers":{"Content-Type": "text/html; charset=utf-8"},
     "serve": "index.html"
 }
 </pre>
@@ -104,6 +102,26 @@ pre {background-color:#f0f0ff;padding:0.3em}
 }
 </pre>
 
+<h3>xmlRpc</h3>
+<p>Process XML-RPC request.</p>
+<table>
+<tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
+<tr><td>methods</td><td>dict</td><td>methods ("methodName":{"serve":"filename"}, if no "serve" option given, uses "methodName.xmlrpc".)</td></tr>
+<tr><td>module</td><td>string</td><td>Python file to use its functions as methods.</td></tr>
+</table>
+<pre>
+// Example: Serve some methods from files and some handle by Python.
+
+"POST /RPC2/":{
+    "handler": "xmlRpc",
+    "methods":{
+        "method1":{},
+        "method2":{"serve":"response.xmlrpc"}
+    },
+    "module":"my_xmlrpc_methods"
+}
+</pre>
+
 <h3>dump</h3>
 <p>Return page showing request headers and data.</p>
 <p>No config options.</p>
@@ -120,14 +138,57 @@ pre {background-color:#f0f0ff;padding:0.3em}
 <h2>Configuration examples</h2>
 
 <h3>Just serve files</h3>
-<p>Return files from current directory and subdirectories as text/html</p>
+<p>Return files from current directory and subdirectories, sets Content-Type automaticaly.</p>
 <pre>
+disk:
+root/
+    setup.json
+    file1.html
+    dir1/
+        file2.html
+        image.png
+    dir2/
+        file3.html
+
+setup.json:
 "GET | POST":{
     "handler":"serveDir",
-    "dropParams": true,
-    "headers":{"Content-Type": "text/html; charset=utf-8"}
+    "dropParams": true
 }
 </pre>
+
+<h3>XML-RPC interface</h3>
+<p>Serve some methods from files and some handle by Python.</p>
+<pre>
+disk:
+server.py
+...
+my_xmlrpc_methods.py
+root/
+    RPC2/
+        setup.json
+        method1.xmlrpc
+        response.xmlrpc
+
+setup.json:
+"POST":{
+    "handler": "xmlRpc",
+    "methods":{
+        "method1":{},
+        "method2":{"serve":"response.xmlrpc"}
+    },
+    "module":"my_xmlrpc_methods"
+}
+
+my_xmlrpc_methods.py:
+# method returning given values
+def mirror(params):
+    return params
+# addition
+def add(params):
+    return [params[0] + params[2]]
+</pre>
+
 
 <h3>REST interface</h3>
 <p>TODO</p>

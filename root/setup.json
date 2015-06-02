@@ -1,7 +1,6 @@
 "GET html/":{
     "handler": "serveDir",
-    "dropParams": true,
-    "headers":{"Content-Type": "text/html; charset=utf-8"}
+    "dropParams": true
 },
 
 "GET 404 | POST 404":{
@@ -40,6 +39,5 @@
 
 "GET":{
     "handler": "serveFile",
-    "headers":{"Content-Type": "text/html; charset=utf-8"},
     "serve": "index.html"
 }
