@@ -9,7 +9,11 @@ class handler:
     def __init__(self, cfg, rqHandler):
         self.rq = rqHandler
         self.disabled = cfg.get('disable', False)
-        self.status = cfg.get('status', 200)
+        self.status = cfg.get('status', None)
+        self.statusForced = True
+        if self.status == None:
+            self.status = 200
+            self.statusForced = False
         self.statusMessage = cfg.get('statusMessage', '')
         self.delay = cfg.get('delay', 0)
         self.headers = cfg.get('headers', {})
@@ -65,9 +69,16 @@ class handler:
         length = int(self.rq.headers.getheader('Content-Length', 0))
         data = self.rq.getData()
         return client, command, headers, data
-#eddef
 
-
+    def readFile(self, fpath):
+        try:
+            return open(fpath, 'r').read()
+        except IOError as e:
+            self.rq.log_error(str(e))
+            if not self.statusForced:
+                self.status = 404
+                self.statusMesssage = 'Not found'
+        return ''
 
 #endclass
 
@@ -79,11 +90,10 @@ class serveDir(handler):
         self.dropParams = cfg.get('dropParams', False)
 
     def run(self, path):
+        data = self.readFile(path)
         handler.run(self, path)
         self.rq.end_headers()
-        if self.dropParams:
-            path = urlparse.urlparse(path).path
-        self.rq.write(open(path, 'r').read())
+        self.rq.write(data)
 #endclass
 
 class serveFile(handler):
@@ -93,9 +103,10 @@ class serveFile(handler):
         self.serveFile = cfg.get('serve', '')
 
     def run(self, path):
+        data = self.readFile(os.path.join(path, self.serveFile))
         handler.run(self, path)
         self.rq.end_headers()
-        self.rq.write(open(os.path.join(path, self.serveFile)).read())
+        self.rq.write(data)
 #endclass
 
 class serveString(handler):
@@ -184,6 +195,19 @@ class xmlRpc(handler):
     def __init__(self, cfg, rq):
         handler.__init__(self, cfg, rq)
         self.methods = cfg.get('methods', {})
+        mName = cfg.get('module')
+        if mName != None:
+            import importlib
+            from inspect import getmembers, isfunction
+            try:
+                module = importlib.import_module(mName)
+            except ImportError as e:
+                self.rq.log_error(str(e))
+                return
+            for n, f in getmembers(module, isfunction):
+                if n not in self.methods:
+                    self.methods[n] = {'function':f}
+            
 
     def accepts(self, path):
         data = self.rq.getData()
@@ -195,7 +219,9 @@ class xmlRpc(handler):
         params, methodname = xmlrpclib.loads(data)
         self.rq.log_message('RPC call: '+methodname)
         cfg = self.methods[methodname]
-        if 'serve' in cfg:
+        if 'function' in cfg:
+            data = xmlrpclib.dumps(cfg['function'](params), methodname)
+        elif 'serve' in cfg:
             data = open(os.path.join(path, cfg['serve'])).read()
         else:
             data = open(path+'/'+methodname+'.xmlrpc', 'r').read()
