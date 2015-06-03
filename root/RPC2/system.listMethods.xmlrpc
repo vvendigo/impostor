@@ -1,0 +1,25 @@
+<methodResponse>
+<params>
+  <param>
+      <value><array><data>
+        <value>
+          <string>system.listMethods</string>
+          </value>
+        <value>
+          <string>hello</string>
+          </value>
+        <value>
+          <string>bye</string>
+          </value>
+        <value>
+          <string>mirror</string>
+          </value>
+        <value>
+          <string>add</string>
+          </value>
+        </data></array></value>
+  </param>
+</params>
+</methodResponse>
+
+

@@ -4,8 +4,8 @@
         "hello": {
             "serve": "bye.xmlrpc"
         },
-        "bye": {
-        }
+        "bye": {},
+        "system.listMethods":{}
     },
     "module":"xmlrpcmethods"
 }
