@@ -48,6 +48,8 @@ class handler:
             self.rq.send_header(h, v)
 
     def paramCheck(self, conf, params):
+        if type(conf) != dict:
+            return True
         for k, d in conf.iteritems():
             settings = set([v.strip() for v in d.lower().split(',')])
             if not k in params:
@@ -219,7 +221,12 @@ class xmlRpc(handler):
         params, methodname = xmlrpclib.loads(data)
         self.rq.log_message('RPC call: '+methodname)
         cfg = self.methods[methodname]
-        if 'function' in cfg:
+        if "checkParams" in cfg and not self.checkMethodParams(cfg["checkParams"], params):
+            # TODO RPC FAULT
+            f = xmlrpclib.Fault("400", "wrong arguments")
+            self.rq.log_error("wrong arguments");
+            data = xmlrpclib.dumps(f, methodname)
+        elif 'function' in cfg:
             data = xmlrpclib.dumps(cfg['function'](params), methodname)
         elif 'serve' in cfg:
             data = open(os.path.join(path, cfg['serve'])).read()
@@ -232,5 +239,27 @@ class xmlRpc(handler):
         handler.run(self, path)
         self.rq.end_headers()
         self.rq.write(data)
+
+    def checkMethodParams(self, cfg, params):
+        for i, t in enumerate(cfg):
+            tp = set([p.strip() for p in t.split(',')])
+            if i >= len(params):
+                if not 'optional' in tp:
+                    return False
+                continue
+            self.rq.log_message(str(type(params[i])))
+            if "int" in tp and type(params[i]) != int:
+                return False
+            elif "float" in tp and type(params[i]) != float:
+                return False
+            elif "bool" in tp and type(params[i]) != bool:
+                return False
+            elif "string" in tp and type(params[i]) != str:
+                return False
+            elif "array" in tp and type(params[i]) != list:
+                return False
+            elif "dict" in tp and type(params[i]) != dict:
+                return False
+        return True
 #endclass
 

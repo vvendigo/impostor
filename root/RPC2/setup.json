@@ -2,7 +2,8 @@
     "handler": "xmlRpc",
     "methods":{
         "hello": {
-            "serve": "bye.xmlrpc"
+            "serve": "bye.xmlrpc",
+            "checkParams":["int","float,optional","bool,optional","string,optional","array,optional","struct,optional"]
         },
         "bye": {},
         "system.listMethods":{}
