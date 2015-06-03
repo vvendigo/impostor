@@ -156,10 +156,6 @@ class proxy(handler):
 
         conn = httplib.HTTPConnection(url.netloc)
         conn.request(self.rq.command, url.path, body, rqheaders)
-        
-        #rq.path
-        #rq.request_version
-
         res = conn.getresponse()
 
         if self.status == 0:
@@ -207,12 +203,11 @@ class xmlRpc(handler):
             try:
                 module = importlib.import_module(mName)
             except ImportError as e:
-                self.rq.log_error(str(e))
+                self.rq.log_error("Unable to import XMLRPC functions: "+str(e))
                 return
             for n, f in getmembers(module, isfunction):
                 if n not in self.methods:
                     self.methods[n] = {'function':f}
-            
 
     def accepts(self, path):
         data = self.rq.getData()
