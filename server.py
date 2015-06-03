@@ -59,6 +59,15 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     def do_DELETE(self):
         self.handler()
 
+    def do_OPTIONS(self):
+        self.handler()
+
+    def do_TRACE(self):
+        self.handler()
+
+    def do_CONNECT(self):
+        self.handler()
+
     def getHandler(self, pathToTry):
         method = self.command
         path = self.server.rootDir + pathToTry
