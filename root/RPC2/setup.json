@@ -1,5 +1,6 @@
 "POST":{
     "handler": "xmlRpc",
+    "xmlrpcmodule": "xmlrpclib",
     "methods":{
         "hello": {
             "serve": "bye.xmlrpc",

@@ -2,7 +2,6 @@ import os
 import time
 import httplib
 import urlparse
-import xmlrpclib
 import mimetypes
 import importlib
 from inspect import getmembers, isfunction
@@ -123,7 +122,7 @@ class serveString(handler):
     def __init__(self, cfg, rq):
         handler.__init__(self, cfg, rq)
         self.serve = cfg.get('serve', '')
-        
+
     def run(self, path):
         handler.run(self, path)
         self.rq.end_headers()
@@ -199,7 +198,15 @@ class xmlRpc(handler):
     ''' handling XML-RPC requests '''
     def __init__(self, cfg, rq):
         handler.__init__(self, cfg, rq)
+        # select XMLRPC library
+        rpcModuleName = cfg.get('xmlrpcmodule', 'xmlrpclib')
+        try:
+            self.xmlrpclib = importlib.import_module(rpcModuleName)
+        except ImportError as e:
+            self.rq.log_error("Unable to import XMLRPC module: "+str(e))
+            return
         self.methods = cfg.get('methods', {})
+        # load methods from module
         mName = cfg.get('module')
         if mName != None:
             try:
@@ -213,21 +220,21 @@ class xmlRpc(handler):
 
     def accepts(self, path):
         data = self.rq.getData()
-        params, methodname = xmlrpclib.loads(data)
+        params, methodname = self.xmlrpclib.loads(data)
         return handler.accepts(self, path) and methodname in self.methods
 
     def run(self, path):
         data = self.rq.getData()
-        params, methodname = xmlrpclib.loads(data)
+        params, methodname = self.xmlrpclib.loads(data)
         self.rq.log_message('RPC call: '+methodname)
         cfg = self.methods[methodname]
         if "checkParams" in cfg and not self.checkMethodParams(cfg["checkParams"], params):
             # TODO RPC FAULT
-            f = xmlrpclib.Fault("400", "wrong arguments")
+            f = self.xmlrpclib.Fault(400, "wrong arguments")
             self.rq.log_error("wrong arguments");
-            data = xmlrpclib.dumps(f, methodname)
+            data = self.xmlrpclib.dumps(f, methodname)
         elif 'function' in cfg:
-            data = xmlrpclib.dumps(cfg['function'](params), methodname)
+            data = self.xmlrpclib.dumps(cfg['function'](params), methodname)
         elif 'serve' in cfg:
             data = open(os.path.join(path, cfg['serve'])).read()
         else:
