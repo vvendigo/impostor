@@ -17,6 +17,9 @@
         <value>
           <string>add</string>
           </value>
+        <value>
+          <string>fault</string>
+          </value>
         </data></array></value>
   </param>
 </params>

@@ -1,12 +1,12 @@
 "POST":{
     "handler": "xmlRpc",
-    "xmlrpcmodule": "xmlrpclib",
     "methods":{
         "hello": {
             "serve": "bye.xmlrpc",
             "checkParams":["int","float,optional","bool,optional","string,optional","array,optional","struct,optional"]
         },
         "bye": {},
+        "fault":{"fault":[123, "hi there, this is fault"]},
         "system.listMethods":{}
     },
     "module":"xmlrpcmethods"

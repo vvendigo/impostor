@@ -84,9 +84,9 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         confData = "{%s}"%open(confPath, 'r').read()
         try:
             conf = json.loads(confData)
-        except:
-            self.log_error('Unable to parse '+confPath)
-            raise
+        except ValueError as e:
+            self.log_error('Unable to parse '+confPath+': '+str(e))
+            return None
         methodConf = None
         for m, mconf in conf.iteritems():
             parts = [p.strip() for p in m.split('|')]

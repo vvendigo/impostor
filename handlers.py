@@ -205,6 +205,7 @@ class xmlRpc(handler):
         except ImportError as e:
             self.rq.log_error("Unable to import XMLRPC module: "+str(e))
             return
+        self.dumpsParams = cfg.get('dumpsParams', {})
         self.methods = cfg.get('methods', {})
         # load methods from module
         mName = cfg.get('module')
@@ -229,14 +230,24 @@ class xmlRpc(handler):
         self.rq.log_message('RPC call: '+methodname)
         cfg = self.methods[methodname]
         if "checkParams" in cfg and not self.checkMethodParams(cfg["checkParams"], params):
-            # TODO RPC FAULT
             f = self.xmlrpclib.Fault(400, "wrong arguments")
             self.rq.log_error("wrong arguments");
-            data = self.xmlrpclib.dumps(f, methodname)
-        elif 'function' in cfg:
-            data = self.xmlrpclib.dumps(cfg['function'](params), methodname)
+            self.dumpsParams['params'] = f
+            self.dumpsParams['methodresponse'] = True
+            data = self.xmlrpclib.dumps(**(self.dumpsParams))
+        elif 'fault' in cfg:
+            code, msg = cfg['fault']
+            f = self.xmlrpclib.Fault(code, msg)
+            self.rq.log_error("Fault %d: %s"%(code, msg));
+            self.dumpsParams['params'] = f
+            self.dumpsParams['methodresponse'] = True
+            data = self.xmlrpclib.dumps(**(self.dumpsParams))
         elif 'serve' in cfg:
             data = open(os.path.join(path, cfg['serve'])).read()
+        elif 'function' in cfg:
+            self.dumpsParams['params'] = (cfg['function'](params),)
+            self.dumpsParams['methodresponse'] = True
+            data = self.xmlrpclib.dumps(**(self.dumpsParams))
         else:
             data = open(path+'/'+methodname+'.xmlrpc', 'r').read()
 
@@ -254,7 +265,7 @@ class xmlRpc(handler):
                 if not 'optional' in tp:
                     return False
                 continue
-            self.rq.log_message(str(type(params[i])))
+            #self.rq.log_message(str(type(params[i])))
             if "int" in tp and type(params[i]) != int:
                 return False
             elif "float" in tp and type(params[i]) != float:
