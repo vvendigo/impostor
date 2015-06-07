@@ -8,6 +8,45 @@ import os
 defaultAddr = '127.0.0.1:8000'
 defaultConfFile = './setup.json'
 
+def delComments(t):
+    ignore = False
+    qCnt = 0
+    bsCnt = 0
+    sCnt = 0
+    out = ''
+    for ch in t:
+        if ignore:
+            if ch == '\n':
+                out += ch
+                ignore = False
+        else:
+            if ch == '"' and bsCnt%2==0:
+                qCnt += 1
+                sCnt = 0
+                bsCnt = 0
+            elif ch == '/':
+                bsCnt = 0
+                if sCnt > 0 and qCnt%2==0:
+                    out = out[:-sCnt]
+                    ignore = True
+                    sCnt = 0
+                    bsCnt = 0
+                    continue
+                sCnt += 1
+            elif ch == '\\':
+                bsCnt += 1
+                sCnt = 0
+            elif ch == '\n':
+                bsCnt = 0
+                sCnt = 0
+            else:
+                bsCnt = 0
+                sCnt = 0
+            out += ch
+    return out
+#enddef
+
+
 class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     server_version = "Impostor/1.0"
 
@@ -81,7 +120,7 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         if not os.path.exists(confPath):
             self.log_message(confPath+' not found')
             return None
-        confData = "{%s}"%open(confPath, 'r').read()
+        confData = "{%s}"%delComments(open(confPath, 'r').read())
         try:
             conf = json.loads(confData)
         except ValueError as e:
@@ -142,7 +181,7 @@ if __name__ == "__main__":
     port = 8000
 
     # load server conf
-    confData = "{%s}"%open(options.conf, 'r').read()
+    confData = "{%s}"%delComments(open(options.conf, 'r').read())
     conf = json.loads(confData)
     if 'server' in conf:
         if 'host' in conf['server']:
