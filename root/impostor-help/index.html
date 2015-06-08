@@ -14,12 +14,13 @@ pre {background-color:#f0f0ff;padding:0.3em}
 <h2>Routing</h2>
 <p>TODO</p>
 
+
 <a name="handlers" href="#">^</a>
 <h2>Handlers</h2>
 <p>Common configuration options:</p>
 <table>
 <tr><th>Conf option</th><th>type</th><th>meaning</th></tr>
-<tr><td>handler</td><td>string</td><td>Handler to use</td></tr>
+<tr><td>handler</td><td>string</td><td>Handler to use. If there is a dot, first part of name is used as module name. ie. "myhandlers.hand1"</td></tr>
 <tr><td>disable</td><td>bool</td><td>Do nothing (do not interfere with routing) [false]</td></tr>
 <tr><td>status</td><td>int</td><td>Status code to return [200]</td></tr>
 <tr><td>statusMessage</td><td>string</td><td>Status message to return []</td></tr>
@@ -111,9 +112,8 @@ pre {background-color:#f0f0ff;padding:0.3em}
     "serve":"filename", - if no "serve" option given, uses "methodName.xmlrpc"<br>
     "checkParams":["int|float|bool|string|array|struct[,optional]", ...],<br>
     "fault":[123, "message"] - serve RPC fault)</td></tr>
-<tr><td>xmlrpcmodule</td><td>string</td><td>Python XMLRPC module [xmlrpclib]</td></tr>
 <tr><td>module</td><td>string</td><td>Python file to use its functions as methods.</td></tr>
-<tr><td>dumpsParams</td><td>dict</td><td>dumps function params, ie. "useBinary": true for fastrpc (for module functions only)</td></tr>
+<tr><td>dumpsParams</td><td>dict</td><td>dumps function params, ie. "encoding": "windows-1250"</td></tr>
 </table>
 <pre>
 // Example: Serve some methods from files and some handle by Python.
@@ -140,6 +140,27 @@ pre {background-color:#f0f0ff;padding:0.3em}
     "handler":"dump"
 }
 </pre>
+
+<h3>handlers_fastrpc.fastRpc</h3>
+<p>External handlers file example and Fast-RPC implementation in one.</p>
+<p>It has the same configuration as xmlRpc handler. Method definition also supportd "verbatim" option, to pass raw files. If not set, recodes files by dumps(loads(file)) by default.
+Uses "application/x-frpc" Content-Type, if not set.</p>
+
+<pre>
+// Example: Serve some methods from files and some handle by Python.
+
+"POST /RPC2/":{
+    "handler": "handlers_fastrpc.fastRpc",
+    "methods":{
+        "method1":{"checkParams":["int","struct,optional"]},
+        "method2":{"serve":"response.xmlrpc", "verbatim":true}, // response.xmlrpc has to be binary
+        "badMethod":{"fault":[400, "Fault! Muhaha!"]}
+    },
+    "module":"my_xmlrpc_methods"
+}
+</pre>
+
+
 
 <a name="examples" href="#">^</a>
 <h2>Configuration examples</h2>
@@ -198,26 +219,6 @@ def mirror(params):
 # addition
 def add(params):
     return (params[0] + params[2],)
-</pre>
-
-<h3>Fast RPC setup</h3>
-<p>You need to set proper <i>xmlrpcmodule</i>, send "application/x-frpc" header and set "useBinary" in <i>dumpsParams</i>. Because of forced Content-Type, you can't mix FRPC and non-FRPC methods in one method section. But you can define another non-FRPC section to handle other methods.
-<pre>
-"POST":{
-    "handler": "xmlRpc",
-    "headers": {"Content-Type": "application/x-frpc"},
-    "xmlrpcmodule": "xmlrpclib",
-    "xmlrpcmodule":"fastrpc",
-    "dumpsParams":{"useBinary":true},
-    "module":"xmlrpcmethods"
-},
-
-"POST":{
-    "handler": "xmlRpc",
-    "methods":{
-        "method1":{}
-    }
-}
 </pre>
 
 <h3>REST interface</h3>

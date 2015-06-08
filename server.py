@@ -4,6 +4,7 @@ import BaseHTTPServer
 import json
 import handlers
 import os
+import importlib
 
 defaultAddr = '127.0.0.1:8000'
 defaultConfFile = './setup.json'
@@ -145,7 +146,14 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             self.log_error('no handler for "'+method+'" set in '+confPath)
             return None
         # create handler
-        handlerClass = getattr(handlers, methodConf['handler'])
+        handlerName = methodConf['handler']
+        # if handler name contains '.', use given module
+        p = handlerName.find('.')
+        if p < 1:
+            handlerClass = getattr(handlers, handlerName)
+        else:
+            module = importlib.import_module(handlerName[:p])
+            handlerClass = getattr(module, handlerName[p+1:])
         handler = handlerClass(methodConf, self)
         # check acceptance
         if handler.accepts(self.server.rootDir +'/'+ self.path):

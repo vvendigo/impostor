@@ -1,5 +1,5 @@
 "POST":{
-    "handler": "xmlRpc",
+    "handler": "handlers_fastrpc.fastRpc",
     "methods":{
         "hello": {
             "serve": "bye.xmlrpc",

@@ -5,6 +5,7 @@ import urlparse
 import mimetypes
 import importlib
 from inspect import getmembers, isfunction
+import xmlrpclib
 
 class handler:
     ''' interface '''
@@ -198,13 +199,7 @@ class xmlRpc(handler):
     ''' handling XML-RPC requests '''
     def __init__(self, cfg, rq):
         handler.__init__(self, cfg, rq)
-        # select XMLRPC library
-        rpcModuleName = cfg.get('xmlrpcmodule', 'xmlrpclib')
-        try:
-            self.xmlrpclib = importlib.import_module(rpcModuleName)
-        except ImportError as e:
-            self.rq.log_error("Unable to import XMLRPC module: "+str(e))
-            return
+        self.xmlrpclib = xmlrpclib # set xmlrpc lib
         self.dumpsParams = cfg.get('dumpsParams', {})
         self.methods = cfg.get('methods', {})
         # load methods from module
