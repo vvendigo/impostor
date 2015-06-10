@@ -95,6 +95,11 @@ class serveDir(handler):
         self.dropParams = cfg.get('dropParams', False)
 
     def run(self, path):
+        if self.dropParams:
+            parts = urlparse.urlparse(self.rq.path)
+            path = self.rq.server.rootDir + '/' + parts.path
+        else:
+            path = self.rq.server.rootDir + '/' + self.rq.path
         data = self.readFile(path)
         if 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = mimetypes.guess_type(path)[0]
@@ -110,6 +115,7 @@ class serveFile(handler):
         self.serveFile = cfg.get('serve', '')
 
     def run(self, path):
+        path = self.rq.server.rootDir + '/' + path
         data = self.readFile(os.path.join(path, self.serveFile))
         if 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = mimetypes.guess_type(self.serveFile)[0]

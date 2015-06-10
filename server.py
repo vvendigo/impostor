@@ -71,18 +71,19 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         # iterate path, get deepest usable handler
         pos = 0
         handler = None
+        pos = len(self.path)
         while pos >= 0:
             path = self.path[:pos]
-            h = self.getHandler(path)
-            if h != None:
-                handler = h
-            pos = self.path.find('/', pos+1)
+            handler = self.getHandler(path)
+            if handler != None:
+                break
+            pos = self.path.rfind('/', 0, pos-1)
         #endwhile
         if handler == None:
             self.send_error(501, "Not Implemented by Imposter")
             return
         # call the handler
-        handler.run(self.server.rootDir +'/'+ self.path)
+        handler.run(path)
 
     def do_HEAD(self):
         self.handler()
@@ -112,14 +113,14 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         method = self.command
         path = self.server.rootDir + pathToTry
 
-        #self.log_message('Trying '+path);
+        if self.server.verbose: self.log_message('Searching '+path);
         if not os.path.exists(path):
-            self.log_message(path+' not found')
+            if self.server.verbose: self.log_message(path+' not found')
             return None
-        confPath = path+'/'+'setup.json'
+        confPath = os.path.join(path, 'setup.json')
         conf = {}
         if not os.path.exists(confPath):
-            self.log_message(confPath+' not found')
+            if self.server.verbose: self.log_message(confPath+' not found')
             return None
         confData = "{%s}"%delComments(open(confPath, 'r').read())
         try:
@@ -140,10 +141,10 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                     methodConf = mconf
                     break
         if methodConf == None:
-            self.log_error('no "'+method+'" in '+confPath)
+            if self.server.verbose: self.log_error('no "'+method+'" in '+confPath)
             return None
         if 'handler' not in methodConf:
-            self.log_error('no handler for "'+method+'" set in '+confPath)
+            if self.server.verbose: self.log_error('no handler for "'+method+'" set in '+confPath)
             return None
         # create handler
         handlerName = methodConf['handler']
@@ -165,8 +166,9 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class HTTPServer(BaseHTTPServer.HTTPServer):
-    def __init__(self, server_address, RequestHandlerClass, rootDir):
+    def __init__(self, server_address, RequestHandlerClass, rootDir, verbose=False):
         self.rootDir = rootDir
+        self.verbose = verbose
         BaseHTTPServer.HTTPServer.__init__(self, server_address, RequestHandlerClass)
 #endclass
 
@@ -180,6 +182,8 @@ if __name__ == "__main__":
     parser = OptionParser(usage="usage: %prog [options] [host][:port] [rootDir]", version=HTTPRequestHandler.server_version)
     parser.add_option("-f", "--config", dest="conf", default=defaultConfFile,
                   help="JSON server config file to use")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False,
+                  help="Log a lot")
 
     (options, args) = parser.parse_args()
 
@@ -191,15 +195,19 @@ if __name__ == "__main__":
     # load server conf
     confData = "{%s}"%delComments(open(options.conf, 'r').read())
     conf = json.loads(confData)
-    if 'server' in conf:
-        if 'host' in conf['server']:
-            addr = ''
-            host = conf['server']['host']
-        if 'port' in conf['server']:
-            addr = ''
-            port = conf['server']['port']
-        if 'rootDir' in conf['server']:
-            rootDir = os.path.join(rootDir, conf['server']['rootDir'])
+    scfg = conf.get('server', {})
+    if 'host' in scfg:
+        addr = ''
+        host = scfg['host']
+    if 'port' in scfg:
+        addr = ''
+        port = scfg['port']
+    if 'rootDir' in scfg:
+        rootDir = os.path.join(rootDir, scfg['rootDir'])
+    if not options.verbose:
+        verbose = scfg.get("verbose", False)
+    else:
+        verbose = options.verbose
 
     if len(args) > 2:
         parser.error("Incorrect number of arguments")
@@ -217,7 +225,7 @@ if __name__ == "__main__":
 
     print "Running at %s:%d, serving %s/,"%(host, port, rootDir),
     print "Ctrl+C to stop"
-    httpd = HTTPServer((host, port), HTTPRequestHandler, rootDir)
+    httpd = HTTPServer((host, port), HTTPRequestHandler, rootDir, verbose)
     httpd.serve_forever()
 
 #endmain

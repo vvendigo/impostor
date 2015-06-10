@@ -1,15 +1,17 @@
-// aaaaa!!!
+// serve files from html/ subdir
 "GET html/":{
     "handler": "serveDir",
     "dropParams": true
 },
 
+// allways return status 404 for paths starting /404
 "GET 404 | POST 404":{
     "handler":"headers",
     "dumpRequest": true,
     "status":404
 },
 
+// wait for 3 secs and serve given data for paths starting /slow/
 "GET slow/":{
     "handler": "serveString",
     "headers":{"Content-Type": "text/html; charset=utf-8"},
@@ -17,12 +19,14 @@
     "serve": "<html><body>Slow, isn't it?</body></html>"
 },
 
+// proxy image
 "GET christ-mocked.jpg":{
     "handler": "proxy",
     "dumpRequest": true,
     "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
 },
 
+// check request GET params (returns just headers)
 "GET paramcheck":{
     "handler": "headers",
     "status":200,
@@ -34,10 +38,12 @@
     }
 },
 
+// dump every request for path starting /dump (both POST and GET methods)
 "GET dump | POST dump":{
     "handler":"dump"
 },
 
+// otherwise serve index.html file from current directory
 "GET":{
     "handler": "serveFile",
     "serve": "index.html"

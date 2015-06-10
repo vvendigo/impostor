@@ -1,4 +1,6 @@
+// Server setup
 "server": {
+//	"verbose": true,
 	"host": "localhost",
 	"port": 8000,
 	"rootDir": "root"
