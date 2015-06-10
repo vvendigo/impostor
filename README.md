@@ -15,5 +15,5 @@ The only prequisity is Python (>=2.6)
  - download repo
  - run ./server.py
  - visit http://localhost:8000/
-
+ - see documentation & examples at http://localhost:8000/impostor-help/
 

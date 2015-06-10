@@ -168,7 +168,7 @@ Uses "application/x-frpc" Content-Type, if not set.</p>
 <h3>Just serve files</h3>
 <p>Return files from current directory and subdirectories, sets Content-Type automaticaly.</p>
 <pre>
-disk:
+filesystem:
 root/
     setup.json
     file1.html
@@ -188,7 +188,7 @@ setup.json:
 <h3>XML-RPC interface</h3>
 <p>Serve some methods from files and some handle by Python. Proxy the rest somewhere else.</p>
 <pre>
-disk:
+filesystem:
 server.py
 ...
 my_xmlrpc_methods.py
@@ -218,7 +218,7 @@ def mirror(params):
     return params
 # addition
 def add(params):
-    return (params[0] + params[2],)
+    return params[0] + params[1]
 </pre>
 
 <h3>REST interface</h3>
