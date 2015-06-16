@@ -229,6 +229,7 @@ class xmlRpc(handler):
         data = self.rq.getData()
         params, methodname = self.xmlrpclib.loads(data)
         self.rq.log_message('RPC call: '+methodname)
+        path = self.rq.server.rootDir + path
         cfg = self.methods[methodname]
         if "checkParams" in cfg and not self.checkMethodParams(cfg["checkParams"], params):
             f = self.xmlrpclib.Fault(400, "wrong arguments")
