@@ -77,7 +77,7 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             handler = self.getHandler(path)
             if handler != None:
                 break
-            pos = self.path.rfind('/', 0, pos-1)
+            pos = self.path.rfind('/', 0, pos)
         #endwhile
         if handler == None:
             self.send_error(501, "Not Implemented by Impostor")
