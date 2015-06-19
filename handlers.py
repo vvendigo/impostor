@@ -37,6 +37,9 @@ class handler:
             time.sleep(self.delay)
         if self.checkParams != None:
             up = urlparse.parse_qs(urlparse.urlparse(self.rq.path).query)
+            if self.rq.command == 'POST':
+                data = self.rq.getData()
+                up.update(urlparse.parse_qs(urlparse.urlparse(self.rq.path).query))
             if not self.paramCheck(self.checkParams, up):
                 self.rq.send_response(400, "Impostor says, Bad request!")
                 return
