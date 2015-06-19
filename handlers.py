@@ -22,6 +22,7 @@ class handler:
         self.headers = cfg.get('headers', {})
         self.checkParams = cfg.get('checkParams', None)
         self.dumpRequest = cfg.get('dumpRequest', False)
+        self.template = cfg.get('template', None)
 
     def accepts(self, path):
         return not self.disabled
@@ -36,10 +37,7 @@ class handler:
         if self.delay > 0:
             time.sleep(self.delay)
         if self.checkParams != None:
-            up = urlparse.parse_qs(urlparse.urlparse(self.rq.path).query)
-            if self.rq.command == 'POST':
-                data = self.rq.getData()
-                up.update(urlparse.parse_qs(urlparse.urlparse(self.rq.path).query))
+            up = self.getParamDict()
             if not self.paramCheck(self.checkParams, up):
                 self.rq.send_response(400, "Impostor says, Bad request!")
                 return
@@ -49,6 +47,15 @@ class handler:
             self.rq.send_response(self.status)
         for h, v in self.headers.iteritems():
             self.rq.send_header(h, v)
+
+    def getParamDict(self, get=True, post=True):
+        up = {}
+        if get:
+            up = urlparse.parse_qs(urlparse.urlparse(self.rq.path).query)
+        if post and self.rq.command == 'POST':
+            data = self.rq.getData()
+            up.update(urlparse.parse_qs(data))
+        return up
 
     def paramCheck(self, conf, params):
         if type(conf) != dict:
@@ -78,9 +85,31 @@ class handler:
         data = self.rq.getData()
         return client, command, headers, data
 
-    def readFile(self, fpath):
+    def templateData(self, src):
+        if self.template == None:
+            return src
+        args = self.template
+        args.update(self.getParamDict())
+        tArgs = {}
+        for k, v in args.items():
+            if type(v)==list:
+                tArgs[k] = v[0]
+            else:
+                tArgs[k] = v
         try:
-            return open(fpath, 'r').read()
+            return src % tArgs
+        except KeyError as e:
+            self.rq.log_error("Unable to template '%s': KeyError %s"%(fpath, str(e)))
+        except ValueError as e:
+            self.rq.log_error("Unable to template '%s': ValueError %s"%(fpath, str(e)))
+        return src
+
+    def getFile(self, fpath, template=True):
+        try:
+            src = open(fpath, 'r').read()
+            if template:
+                return self.templateData(src)
+            return src
         except IOError as e:
             self.rq.log_error(str(e))
             if not self.statusForced:
@@ -103,7 +132,7 @@ class serveDir(handler):
             path = self.rq.server.rootDir + '/' + parts.path
         else:
             path = self.rq.server.rootDir + '/' + self.rq.path
-        data = self.readFile(path)
+        data = self.getFile(path)
         if 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = mimetypes.guess_type(path)[0]
         handler.run(self, path)
@@ -119,7 +148,7 @@ class serveFile(handler):
 
     def run(self, path):
         path = self.rq.server.rootDir + '/' + path
-        data = self.readFile(os.path.join(path, self.serveFile))
+        data = self.getFile(os.path.join(path, self.serveFile))
         if 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = mimetypes.guess_type(self.serveFile)[0]
         handler.run(self, path)
@@ -136,7 +165,7 @@ class serveString(handler):
     def run(self, path):
         handler.run(self, path)
         self.rq.end_headers()
-        self.rq.write(self.serve)
+        self.rq.write(self.templateData(self.serve))
 #endclass
 
 class headers(handler):
@@ -248,13 +277,13 @@ class xmlRpc(handler):
             self.dumpsParams['methodresponse'] = True
             data = self.xmlrpclib.dumps(**(self.dumpsParams))
         elif 'serve' in cfg:
-            data = open(os.path.join(path, cfg['serve'])).read()
+            data = self.getFile(os.path.join(path, cfg['serve']))
         elif 'function' in cfg:
             self.dumpsParams['params'] = (cfg['function'](params),)
             self.dumpsParams['methodresponse'] = True
             data = self.xmlrpclib.dumps(**(self.dumpsParams))
         else:
-            data = open(path+'/'+methodname+'.xmlrpc', 'r').read()
+            data = self.getFile(path+'/'+methodname+'.xmlrpc', 'r')
 
         if 'Content-Type' not in self.headers:
             self.headers['Content-Type'] = 'text/xml'

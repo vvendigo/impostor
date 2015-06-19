@@ -11,12 +11,13 @@
     "status":404
 },
 
-// wait for 3 secs and serve given data for paths starting /slow/
+// wait for 3 secs and serve given data (templated by parameter x) for paths starting /slow/
 "GET slow/":{
     "handler": "serveString",
     "headers":{"Content-Type": "text/html; charset=utf-8"},
     "delay": 3.0,
-    "serve": "<html><body>Slow, isn't it?</body></html>"
+    "serve": "<html><body>Slow, isn't it?<br>x='%(x)s'</body></html>",
+    "template":{"x":"[not set]"}
 },
 
 // proxy image
@@ -26,21 +27,28 @@
     "URL": "http://www.access-jesus.com/images/christ-mocked.jpg"
 },
 
-// check request GET params (returns just headers)
-"GET paramcheck":{
+// check request GET/POST params (returns just headers)
+"POST paramcheck | GET paramcheck":{
     "handler": "headers",
     "status":200,
     "checkParams":{
         "x":"int,required",
         "y":"int",
         "s":"string",
-        "f":"float"
+        "f":"float,required"
     }
 },
 
 // dump every request for path starting /dump (both POST and GET methods)
 "GET dump | POST dump":{
     "handler":"dump"
+},
+
+// return template.html templated by GET/POST args, defining default 'name' value
+"POST template":{
+    "handler": "serveFile",
+    "serve": "template.html",
+    "template":{"name":"Impostor User"}
 },
 
 // otherwise serve index.html file from current directory

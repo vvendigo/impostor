@@ -47,7 +47,7 @@ class fastRpc(handlers.xmlRpc):
         #self.rq.log_message('Data: '+str(data))
 
     def processFile(self, fname, verbatim):
-        data = open(fname, 'r').read()
+        data = self.getFile(fname)
         if verbatim:
             return data
 
