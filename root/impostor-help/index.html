@@ -28,6 +28,7 @@ pre {background-color:#f0f0ff;padding:0.3em}
 <tr><td>delay</td><td>float</td><td>Wait given secs before reply [0.0]</td></tr>
 <tr><td>dumpRequest</td><td>bool</td><td>Write all request data to log [false]</td></tr>
 <tr><td>checkParams</td><td>dict</td><td>{"name":"int|float|string[,required]", ...}</td></tr>
+<tr><td>template</td><td>dict</td><td>Template output using request parameters (values in dict are used as defaults).<br>Uses plain Python string format with mapping, so <b>%(name)s</b> will be replaced by <b>name</b> value.</td></tr>
 </table>
 
 <h3>headers</h3>
@@ -80,11 +81,12 @@ pre {background-color:#f0f0ff;padding:0.3em}
 <tr><td>serve</td><td>string</td><td>Data to return</td></tr>
 </table>
 <pre>
-// Example: Serve given HTML data for every GET request.
+// Example: Serve given HTML data for every GET request. Delay response by 3 secs.
 
 "GET":{
     "handler": "serveString",
     "headers":{"Content-Type": "text/html"},
+    "delay": 3,
     "serve": "&lt;html&gt;&lt;body&gt;Slow, isn't it?&lt;/body&gt;&lt;/html&gt;"
 }
 </pre>
@@ -153,7 +155,7 @@ Uses "application/x-frpc" Content-Type, if not set.</p>
     "handler": "handlers_fastrpc.fastRpc",
     "methods":{
         "method1":{"checkParams":["int","struct,optional"]},
-        "method2":{"serve":"response.xmlrpc", "verbatim":true}, // response.xmlrpc has to be binary
+        "method2":{"serve":"response.frpc", "verbatim":true}, // response.frpc has to be binary
         "badMethod":{"fault":[400, "Fault! Muhaha!"]}
     },
     "module":"my_xmlrpc_methods"
