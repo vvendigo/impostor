@@ -10,6 +10,7 @@ defaultAddr = '127.0.0.1:8000'
 defaultConfFile = './setup.json'
 
 def delComments(t):
+    "Strip out one line comments '//*', but keep line ends"
     ignore = False
     qCnt = 0
     bsCnt = 0
@@ -49,6 +50,7 @@ def delComments(t):
 
 
 class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    "Handle every method known, select proper handler"
     server_version = "Impostor/1.0"
 
     def __init__(self, request, client_address, server):
@@ -166,6 +168,7 @@ class HTTPRequestHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 class HTTPServer(BaseHTTPServer.HTTPServer):
+    "Extended to keep some settings"
     def __init__(self, server_address, RequestHandlerClass, rootDir, verbose=False):
         self.rootDir = rootDir
         self.verbose = verbose
